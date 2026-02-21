@@ -1,0 +1,3 @@
+import FluxerSwift
+
+test()
