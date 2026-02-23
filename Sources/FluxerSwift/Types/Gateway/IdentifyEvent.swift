@@ -26,7 +26,6 @@ public struct IdentifyData: Codable {
 }
 
 public struct IdentifyEvent: GatewayEvent {
-    public static let op = 2
     public var op: Int = 2
     public let d: IdentifyData?
     public init(data: IdentifyData) {
