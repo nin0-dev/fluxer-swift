@@ -7,6 +7,7 @@ public final class FluxerClient: @unchecked Sendable {
     private let encoder = JSONEncoder()
     private let elg: EventLoopGroup
     private var webSocket: WebSocket?
+    public var onClose: ((CloseCode) -> Void)?
 
     public init(_ settings: ClientInitSettings) {
         self.identify = settings.identify
@@ -28,6 +29,41 @@ public final class FluxerClient: @unchecked Sendable {
             guard let self = self else { return }
             self.webSocket = ws
             print("Connected to Fluxer WS")
+
+            ws.onClose.whenSuccess {
+                guard
+                    let fn = self.onClose,
+                    let closeCode = self.webSocket?.closeCode
+                else { return }
+                switch closeCode {
+                case .init(codeNumber: CloseCode.unknownError.rawValue):
+                    fn(.unknownError)
+                case .init(codeNumber: CloseCode.unknownOpcode.rawValue):
+                    fn(.unknownOpcode)
+                case .init(codeNumber: CloseCode.decodeError.rawValue):
+                    fn(.decodeError)
+                case .init(codeNumber: CloseCode.notAuthenticated.rawValue):
+                    fn(.notAuthenticated)
+                case .init(codeNumber: CloseCode.authenticationFailed.rawValue):
+                    fn(.authenticationFailed)
+                case .init(codeNumber: CloseCode.alreadyAuthenticated.rawValue):
+                    fn(.alreadyAuthenticated)
+                case .init(codeNumber: CloseCode.invalidSeq.rawValue):
+                    fn(.invalidSeq)
+                case .init(codeNumber: CloseCode.rateLimited.rawValue):
+                    fn(.rateLimited)
+                case .init(codeNumber: CloseCode.sessionTimeout.rawValue):
+                    fn(.sessionTimeout)
+                case .init(codeNumber: CloseCode.invalidShard.rawValue):
+                    fn(.invalidShard)
+                case .init(codeNumber: CloseCode.shardingRequired.rawValue):
+                    fn(.shardingRequired)
+                case .init(codeNumber: CloseCode.invalidAPIVersion.rawValue):
+                    fn(.invalidAPIVersion)
+                default:
+                    return
+                }
+            }
 
             ws.onText { ws, text in
                 print("Received text:", text)

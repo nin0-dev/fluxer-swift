@@ -10,6 +10,10 @@ let client = FluxerClient(
     )
 )
 
+client.onClose = { ec in
+
+}
+
 client.connect()
 
 dispatchMain()
