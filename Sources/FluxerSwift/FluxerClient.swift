@@ -3,13 +3,21 @@ import NIO
 import WebSocketKit
 
 public final class FluxerClient: @unchecked Sendable {
-    private let token: String
+    private let identify: IdentifyData
+    private let encoder = JSONEncoder()
     private let elg: EventLoopGroup
     private var webSocket: WebSocket?
 
     public init(_ settings: ClientInitSettings) {
-        self.token = settings.token
+        self.identify = settings.identify
         self.elg = settings.eventLoopGroup
+    }
+
+    public func send(_ event: any GatewayEvent) async throws {
+        let data = try encoder.encode(event)
+        let json = String(data: data, encoding: .utf8)!
+        print(json)
+        try await self.webSocket!.send(json)
     }
 
     public func connect() {
@@ -23,6 +31,12 @@ public final class FluxerClient: @unchecked Sendable {
 
             ws.onText { ws, text in
                 print("Received text:", text)
+                Task {
+                    try! await self.send(
+                        IdentifyEvent(
+                            data: self.identify
+                        ))
+                }
             }
         }
     }

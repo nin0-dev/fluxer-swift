@@ -1,11 +1,11 @@
 import NIO
 
 public struct ClientInitSettings {
-    let token: String
+    let identify: IdentifyData
     let eventLoopGroup: EventLoopGroup
 
-    public init(token: String, eventLoopGroup: EventLoopGroup) {
-        self.token = token
+    public init(identify: IdentifyData, eventLoopGroup: EventLoopGroup) {
+        self.identify = identify
         self.eventLoopGroup = eventLoopGroup
     }
 }
