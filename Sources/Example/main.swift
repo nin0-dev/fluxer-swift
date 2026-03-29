@@ -11,7 +11,8 @@ let client = FluxerClient(
 )
 
 client.onClose = { ec in
-
+    print(ec)
+    exit(1)
 }
 
 client.connect()

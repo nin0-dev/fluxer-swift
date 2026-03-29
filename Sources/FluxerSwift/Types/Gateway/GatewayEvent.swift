@@ -1,8 +1,10 @@
-public protocol GatewayEvent: Codable {
-    associatedtype Data: Codable
+public struct EmptyData: Codable {}
 
-    var op: Int { get }
-    var d: Data? { get }
+public protocol GatewayEvent: Codable {
+    associatedtype D: Codable
+
+    var op: Opcode { get }
+    var d: D { get }
     var s: Int? { get }
     var t: String? { get }
 }

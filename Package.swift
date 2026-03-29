@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "fluxer-swift",
     platforms: [
-        .macOS(.v10_15)
+        .macOS(.v13)
     ],
     products: [
         .library(
@@ -26,6 +26,6 @@ let package = Package(
         .executableTarget(
             name: "Example",
             dependencies: ["FluxerSwift"]
-        ),
+        )
     ]
 )
