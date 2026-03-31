@@ -4,7 +4,7 @@ public enum Opcode: Int, Codable {
     case identify = 2
     case presenceUpdate = 3
     case voiceStateUpdate = 4
-    case voiceSerevrPing = 5
+    case voiceServerPing = 5
     case resume = 6
     case reconnect = 7
     case requestGuildMembers = 8
