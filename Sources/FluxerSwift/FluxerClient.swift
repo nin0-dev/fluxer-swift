@@ -16,7 +16,7 @@ public final class FluxerClient: @unchecked Sendable {
         self.elg = settings.eventLoopGroup
     }
 
-    public func send(_ event: inout any GatewayEvent) async throws {
+    public func send(_ event: any GatewayEvent) async throws {
         let data = try encoder.encode(event)
         let json = String(data: data, encoding: .utf8)!
         try await self.webSocket!.send(json)
