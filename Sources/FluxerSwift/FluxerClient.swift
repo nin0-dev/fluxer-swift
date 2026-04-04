@@ -8,6 +8,7 @@ public final class FluxerClient: @unchecked Sendable {
     private let decoder = JSONDecoder()
     private let elg: EventLoopGroup
     private var webSocket: WebSocket?
+    private var sequenceNumber = 0
     private var isHeartbeatAcknowledged = true
     public var onClose: ((CloseCode) -> Void)?
 
@@ -19,6 +20,7 @@ public final class FluxerClient: @unchecked Sendable {
     public func send(_ event: any GatewayEvent) async throws {
         let data = try encoder.encode(event)
         let json = String(data: data, encoding: .utf8)!
+        print("sending out \(json)")
         try await self.webSocket!.send(json)
     }
 
@@ -68,9 +70,13 @@ public final class FluxerClient: @unchecked Sendable {
 
             ws.onText { ws, text in
                 do {
+                    print("receving in \(text)")
                     let d = text.data(using: .utf8)!
                     let baseEvent = try self.decoder.decode(
                         BaseGatewayEvent.self, from: d)
+                    if let seq = baseEvent.s {
+                        self.sequenceNumber = seq
+                    }
                     switch baseEvent.op {
                         case .hello:
                             let event = try self.decoder.decode(HelloEvent.self, from: d)
@@ -81,7 +87,11 @@ public final class FluxerClient: @unchecked Sendable {
                                         Double(event.d.heartbeat_interval)
                                             + Double.random(in: 0.0...1.0))
                                 )
-                                try await self.send(HeartbeatEvent())
+                                try await self.send(HeartbeatEvent(d: self.sequenceNumber))
+                            }
+                        case .heartbeat:
+                            Task {
+                                try await self.send(HeartbeatEvent(d: self.sequenceNumber))
                             }
                         default:
                             print(
