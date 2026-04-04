@@ -1,3 +1,4 @@
+import NIOWebSocket
 import WebSocketKit
 
 public enum CloseCode: Int {
@@ -13,4 +14,15 @@ public enum CloseCode: Int {
     case invalidShard = 4010
     case shardingRequired = 4011
     case invalidAPIVersion = 4012
+}
+
+extension CloseCode {
+    init?(webSocketErrorCode: WebSocketErrorCode) {
+        switch webSocketErrorCode {
+            case .unknown(let code):
+                self.init(rawValue: Int(code))
+            default:
+                return nil
+        }
+    }
 }

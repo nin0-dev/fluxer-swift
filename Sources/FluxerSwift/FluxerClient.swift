@@ -10,7 +10,7 @@ public final class FluxerClient: @unchecked Sendable {
     private var webSocket: WebSocket?
     private var sequenceNumber = 0
     private var isHeartbeatAcknowledged = true
-    public var onClose: ((CloseCode) -> Void)?
+    public let bus = EventBus()
 
     public init(_ settings: ClientInitSettings) {
         self.identify = settings.identify
@@ -35,37 +35,11 @@ public final class FluxerClient: @unchecked Sendable {
 
             ws.onClose.whenSuccess {
                 guard
-                    let fn = self.onClose,
-                    let closeCode = self.webSocket?.closeCode
+                    let closeCode = self.webSocket?.closeCode,
+                    let code = CloseCode(webSocketErrorCode: closeCode)
                 else { return }
-                switch closeCode {
-                    case .init(codeNumber: CloseCode.unknownError.rawValue):
-                        fn(.unknownError)
-                    case .init(codeNumber: CloseCode.unknownOpcode.rawValue):
-                        fn(.unknownOpcode)
-                    case .init(codeNumber: CloseCode.decodeError.rawValue):
-                        fn(.decodeError)
-                    case .init(codeNumber: CloseCode.notAuthenticated.rawValue):
-                        fn(.notAuthenticated)
-                    case .init(codeNumber: CloseCode.authenticationFailed.rawValue):
-                        fn(.authenticationFailed)
-                    case .init(codeNumber: CloseCode.alreadyAuthenticated.rawValue):
-                        fn(.alreadyAuthenticated)
-                    case .init(codeNumber: CloseCode.invalidSeq.rawValue):
-                        fn(.invalidSeq)
-                    case .init(codeNumber: CloseCode.rateLimited.rawValue):
-                        fn(.rateLimited)
-                    case .init(codeNumber: CloseCode.sessionTimeout.rawValue):
-                        fn(.sessionTimeout)
-                    case .init(codeNumber: CloseCode.invalidShard.rawValue):
-                        fn(.invalidShard)
-                    case .init(codeNumber: CloseCode.shardingRequired.rawValue):
-                        fn(.shardingRequired)
-                    case .init(codeNumber: CloseCode.invalidAPIVersion.rawValue):
-                        fn(.invalidAPIVersion)
-                    default:
-                        return
-                }
+
+                self.bus.pub(.closed, payload: code)
             }
 
             ws.onText { ws, text in
