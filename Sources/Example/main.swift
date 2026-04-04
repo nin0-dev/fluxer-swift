@@ -10,7 +10,7 @@ let client = FluxerClient(
     )
 )
 
-client.onClose = { ec in
+client.bus.sub(.closed) { ec in
     print("Closed with \(ec)")
     exit(1)
 }
