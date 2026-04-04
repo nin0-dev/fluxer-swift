@@ -3,9 +3,7 @@ public class EventBus {
 
     public func sub<T>(_ key: Events, handler: @escaping (T) -> Void) {
         let fn: (Any) -> Void = { payload in
-            if let p = payload as? T {
-                handler(p)
-            }
+            handler(payload as! T)
         }
         subs[key.rawValue, default: []].append(fn)
     }
