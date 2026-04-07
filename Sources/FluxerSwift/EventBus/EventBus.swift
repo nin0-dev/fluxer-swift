@@ -8,7 +8,7 @@ public class EventBus {
         subs[key.rawValue, default: []].append(fn)
     }
 
-    public func pub<T>(_ key: Events, payload: T) {
+    public func pub<T>(_ key: Events, _ payload: T) {
         subs[key.rawValue]?.forEach { $0(payload) }
     }
 }

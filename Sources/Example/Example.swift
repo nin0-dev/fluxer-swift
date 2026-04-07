@@ -13,9 +13,10 @@ struct Example {
             )
         )
 
-        client.bus.sub(.closed) { (ec: CloseCode) in
-            print("Closed with \(ec)")
-            exit(1)
+        client.bus.sub(.ready) { (ec: ReadyPayload) in
+            print(
+                "Logged in as \(ec.user.tag) (\(ec.user.id.rawValue))"
+            )
         }
 
         client.connect()

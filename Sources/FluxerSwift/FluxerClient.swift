@@ -17,11 +17,17 @@ public final class FluxerClient: @unchecked Sendable {
         self.elg = settings.eventLoopGroup
     }
 
-    public func send(_ event: any GatewayEvent) async throws {
+    private func send(_ event: any GatewayEvent) async throws {
         let data = try encoder.encode(event)
         let json = String(data: data, encoding: .utf8)!
-        print("sending out \(json)")
         try await self.webSocket!.send(json)
+    }
+
+    private func decodePayload<P: Decodable>(_ type: P.Type, _ json: [String: Any]) throws -> P {
+        return try self.decoder.decode(
+            type,
+            from: try JSONSerialization.data(
+                withJSONObject: json["d"]!))
     }
 
     public func connect() {
@@ -39,12 +45,11 @@ public final class FluxerClient: @unchecked Sendable {
                     let code = CloseCode(webSocketErrorCode: closeCode)
                 else { return }
 
-                self.bus.pub(.closed, payload: code)
+                self.bus.pub(.closed, code)
             }
 
             ws.onText { ws, text in
                 do {
-                    print("receving in \(text)")
                     let d = text.data(using: .utf8)!
                     let baseEvent = try self.decoder.decode(
                         BaseGatewayEvent.self, from: d)
@@ -66,6 +71,26 @@ public final class FluxerClient: @unchecked Sendable {
                         case .heartbeat:
                             Task {
                                 try await self.send(HeartbeatEvent(d: self.sequenceNumber))
+                            }
+                        case .dispatch:
+                            let json =
+                                try JSONSerialization.jsonObject(with: d) as! [String: Any]
+                            Task {
+                                if let event = Events(rawValue: json["t"] as! String) {
+                                    switch event {
+                                        case .closed:
+                                            // this would never be called normally
+                                            _ = 0
+                                        case .ready:
+                                            self.bus.pub(
+                                                .ready,
+                                                try self.decodePayload(ReadyPayload.self, json))
+                                    }
+                                } else {
+                                    print(
+                                        "Unknown event \(json["t"] as! String), report this."
+                                    )
+                                }
                             }
                         default:
                             print(
